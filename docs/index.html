@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>polling-kit · 轮询（退避/超时/停止）</title>
+  <script type="importmap">
+  { "imports": { "polling-kit": "https://cdn.jsdelivr.net/npm/polling-kit@1.0.0/dist/index.js" } }
+  </script>
+  <style>
+    :root { --bg:#f7f8fa; --card:#fff; --border:#e5e7eb; --text:#1f2329; --muted:#6b7280; --accent:#3b82f6; --green:#10b981; --amber:#f59e0b; --code:#f3f4f6; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); padding:24px; }
+    .wrap { max-width:720px; margin:0 auto; }
+    h1 { font-size:22px; margin:0 0 4px; }
+    .sub { color:var(--muted); font-size:14px; margin-bottom:24px; }
+    .sub code { background:var(--code); padding:2px 6px; border-radius:4px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:20px; }
+    .card h2 { font-size:16px; margin:0 0 12px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+    button { border:1px solid var(--border); background:#fff; color:var(--text); padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; }
+    button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    button:hover { opacity:.9; }
+    .bar { height:20px; background:var(--code); border-radius:10px; overflow:hidden; }
+    .bar > i { display:block; height:100%; background:linear-gradient(90deg,#3b82f6,#8b5cf6); width:0; transition:width .2s; }
+    .stat { font-size:13px; color:var(--muted); margin-top:8px; }
+    .stat b { color:var(--text); }
+    pre { background:#0f172a; color:#d1d5db; border-radius:10px; padding:14px; font-size:12px; line-height:1.7; height:220px; overflow-y:auto; }
+    pre .t { color:#64748b; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>polling-kit</h1>
+    <p class="sub">递归 setTimeout（不重叠）· 指数退避 · 超时 · 手动停止。安装：<code>npm i polling-kit</code></p>
+
+    <div class="card">
+      <h2>① 任务进度轮询（每 300ms，到 100% 停止）</h2>
+      <div class="row">
+        <button class="primary" onclick="startPoll()">开始轮询</button>
+        <button onclick="stopPoll()">停止</button>
+      </div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="stat">进度：<b id="pct">0%</b> · 轮询次数：<b id="cnt">0</b> · 状态：<b id="st">-</b></div>
+    </div>
+
+    <div class="card">
+      <h2>② 日志</h2>
+      <pre id="log"></pre>
+    </div>
+  </div>
+
+  <script type="module">
+    import { poll } from 'polling-kit'
+    const logEl = document.getElementById('log')
+    const log = (m) => {
+      const t = new Date().toLocaleTimeString('zh-CN', { hour12: false })
+      logEl.innerHTML += `<span class="t">${t}</span>  ${m}<br>`; logEl.scrollTop = logEl.scrollHeight
+    }
+    let ctrl = null, progress = 0, count = 0
+
+    window.startPoll = async () => {
+      progress = 0; count = 0; logEl.innerHTML = ''
+      const bar = document.getElementById('bar')
+      ctrl = poll(
+        async () => {
+          count++
+          progress = Math.min(100, progress + Math.floor(Math.random() * 30) + 5)
+          document.getElementById('pct').textContent = progress + '%'
+          document.getElementById('cnt').textContent = count
+          document.getElementById('st').textContent = 'running'
+          bar.style.width = progress + '%'
+          return { progress }
+        },
+        {
+          interval: 300,
+          shouldStop: (r) => r.progress >= 100,
+          onPoll: (r) => log(`第 ${count} 次轮询 → ${r.progress}%`),
+        },
+      )
+      const final = await ctrl.promise
+      document.getElementById('st').textContent = 'done'
+      log(`✅ 轮询结束，最终进度 ${final.progress}%`)
+    }
+    window.stopPoll = () => { ctrl?.stop(); log('⏹ 手动停止'); document.getElementById('st').textContent = 'stopped' }
+  </script>
+</body>
+</html>

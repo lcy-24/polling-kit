@@ -1,0 +1,45 @@
+{
+  "name": "polling-kit",
+  "version": "1.0.0",
+  "description": "轮询工具：递归 setTimeout（避免重叠）+ 立即/延迟执行 + 指数退避 + 超时 + 手动停止，零依赖、全 TypeScript",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "polling",
+    "poll",
+    "setTimeout",
+    "retry",
+    "backoff",
+    "async",
+    "interval",
+    "typescript"
+  ],
+  "author": "jackiechan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lcy-24/polling-kit.git"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}
